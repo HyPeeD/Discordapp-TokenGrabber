@@ -10,7 +10,7 @@
 # How to compile
  - In CMD: `pip install pyinstaller` & `pip install pyarmor`
  - Drag the main.py file to the desktop and in CMD do `cd desktop`
- - Do `pyarmor pack -e " --onefile" main.py`, go to dist and grab your packed file!
+ - In CMD `pyarmor pack -e " --onefile" main.py`, go to dist and grab your packed file!
 
 # The program outputs as:
 
