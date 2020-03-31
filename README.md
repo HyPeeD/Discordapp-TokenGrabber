@@ -6,5 +6,6 @@
  - then drag the token grabber to the desktop and do `cd desktop`
  - `pyarmor pack main.py` and you're good to go
 
-# Program Output
- - [Program Output](https://github.com/xanthe1337/Discordapp-TokenGrabber/blob/master/Images/BJzzsd.png?raw=true)
+# The program outputs as:
+
+![Program Output](https://github.com/xanthe1337/Discordapp-TokenGrabber/blob/master/Images/BJzzsd.png?raw=true)
