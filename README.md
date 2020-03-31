@@ -2,6 +2,8 @@
   - 1.0 Deployed!
    + **New ability: Locks the user completely out of his account**
    + **New ability: Return data through a webhook**
+   
+# TODO   
   - Whats next:
    + **Send all the chrome data (login, email, password) through a webhook too**
 
