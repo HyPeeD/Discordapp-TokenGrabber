@@ -106,9 +106,11 @@ class Grabber:
 
     def webHookFile(self, message: str, file): 
         payload = {
-            'content': 'hi'}
+            'content': message
+        }
         file = {
-            "imageFile": open(file, "rb")}
+            "imageFile": open(file, "rb")
+        }
         r = requests.post(self.webhook, json=payload, files=file)
         if r.status_code == 200:
             return True
