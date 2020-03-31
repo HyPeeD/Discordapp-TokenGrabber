@@ -1,4 +1,5 @@
 # Discordapp TokenGrabber
+  - Simple but "advanced" 
   # 1.0 Deployed!
    - Changelog:
     + **New ability: Locks the user completely out of his account**
