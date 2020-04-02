@@ -3,7 +3,7 @@
      # 1.0 Deployed!
        + **New ability: Locks the user completely out of his account**
        + **New ability: Return data through a webhook**
-       + **New ability: Remove 2FA (2FA accounts couldnt get their email & password changes, so i broke that layer)**
+       + **New ability: Remove 2FA (2FA accounts couldnt get their email & password changed, so i broke that layer)**
    
      # Whats next:
        + **Send all the chrome data (login, email, password) through a webhook too**
